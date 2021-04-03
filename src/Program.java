@@ -12,15 +12,7 @@ import org.xml.sax.SAXException;
 public class Program {
     public static Connection connection;
     public static void main(String[] args) throws SQLException, ParserConfigurationException, SAXException, IOException {
-        String [] commands = {"1 - Вивести вміст таблиці у консоль",
-                "2 - Видалити з таблиці запис із певним id",
-                "3 - Вивести записи, координати точок яких лежать у заданих межах",
-                "4 - Модифікувати за введеним id поле з описом точки",
-                "5 - Очистити вміст таблиці",
-                "6 - вихід"};
-        for (String a: commands) {
-            System.out.println(a);
-        }
+        commandList();
         connect();
         try {
             assert connection != null;
@@ -30,63 +22,85 @@ public class Program {
         }
         Scanner scanner = new Scanner(System.in);
         for (;;) {
+            System.out.println("Enter the command number:");
             switch (scanner.nextInt()) {
                 case 1:
-                    show(connection);
+                    show();
+                    break;
+                case 2:
+                    deleteRow();
                     break;
                 case 3:
-                    showLimited(connection);
+                    showLimited();
+                    break;
+                case 4:
+                    modify();
+                    break;
+                case 5:
+                    clear();
                     break;
                 case 6:
+                    connection.close();
                     System. exit(0);
+                    break;
                 default:
                     System.out.println("Error");
+                    break;
             }
         }
     }
 
-    public static void show(Connection connection) {
+    public static void show() {
         try {
             Statement stmt = connection.createStatement();
             ResultSet rs = stmt.executeQuery("SELECT * FROM points");
+            System.out.println("Id\t" + "lat\t\t" + "\tlon\t" + "\t\t description");
             while (rs.next())
                 System.out.println(
-                                rs.getInt(1) + " " +
-                                rs.getDouble(2) + " " +
-                                rs.getDouble(3) + " " +
+                                rs.getInt(1) + "\t" +
+                                rs.getDouble(2) + "\t" +
+                                rs.getDouble(3) + "\t" +
                                 rs.getString(4));
-            connection.close();
         } catch (SQLException e) {
             System.out.println(e);
         }
     }
 
-    public void deleteRow(Connection connection, int row) throws SQLException {
+    public static void deleteRow() throws SQLException {
         Statement stmt = connection.createStatement();
-        int rs = stmt.executeUpdate("DELETE  FROM points WHERE id=" + row);
+        System.out.println("Enter id:");
+        Scanner in = new Scanner(System.in);
+        int row = in.nextInt();
+        stmt.executeUpdate("DELETE  FROM points WHERE id=" + row);
     }
 
-    public static void showLimited(Connection connection) throws SQLException {
+    public static void showLimited() throws SQLException {
         Statement stmt = connection.createStatement();
-        System.out.println("Limits: ");
-        ResultSet rs = stmt.executeQuery("SELECT * FROM points WHERE (lat BETWEEN 47 and 48) and (lon BETWEEN  25 and 26)");
+        System.out.println("Limits:\tlat: 47.74-47.8\tlon: 25-25.1");
+        ResultSet rs = stmt.executeQuery("SELECT * FROM points WHERE (lat BETWEEN 47.74 and 47.8) and (lon BETWEEN  25 and 25.1)");
+        System.out.println("Id\t" + "lat\t\t" + "\tlon\t" + "\t\t description");
         while (rs.next()) {
             System.out.println(
-                            rs.getInt(1) + " " +
-                            rs.getDouble(2) + " " +
-                            rs.getDouble(3) + " " +
+                            rs.getInt(1) + "\t" +
+                            rs.getDouble(2) + "\t" +
+                            rs.getDouble(3) + "\t" +
                             rs.getString(4));
         }
     }
 
-    public static void modify(Connection connection, String text, int id) throws SQLException {
+    public static void modify() throws SQLException {
+        Scanner in = new Scanner(System.in);
+        System.out.println("Enter id:");
+        int id = in.nextInt();
+        System.out.println("Enter text:");
+        String text = in.nextLine();
         PreparedStatement prstmt = connection.prepareStatement("UPDATE points SET description=? WHERE id=?" );
         prstmt.setString(1, text);
         prstmt.setInt(2, id);
         prstmt.executeUpdate();
     }
 
-    public static void clear(Connection connection) throws SQLException {
+    public static void clear() throws SQLException {
         Statement stmt = connection.createStatement();
         stmt.executeUpdate("TRUNCATE TABLE points");
     }
@@ -100,7 +114,7 @@ public class Program {
         NodeList wpt = doc.getDocumentElement().getElementsByTagName("wpt");
         NodeList desc = doc.getDocumentElement().getElementsByTagName("desc");
         String text;
-        double lon = 0, lat = 0;
+        double lon, lat;
         connection.createStatement().executeUpdate("Truncate TABLE points");
         for (int i = 0; i < desc.getLength(); i++)
         {
@@ -112,7 +126,6 @@ public class Program {
             stmt.setDouble(2, lon);
             stmt.setString(3, text);
             stmt.execute();
-            System.out.println("Inserted!!!");
         }
     }
 
@@ -128,6 +141,18 @@ public class Program {
             System.out.println("Connection established");
         } else {
             System.out.println("connection == null");
+        }
+    }
+
+    public static void commandList() {
+        String [] commands = {"1 - Вивести вміст таблиці у консоль",
+                "2 - Видалити з таблиці запис із певним id",
+                "3 - Вивести записи, координати точок яких лежать у заданих межах",
+                "4 - Модифікувати за введеним id поле з описом точки",
+                "5 - Очистити вміст таблиці",
+                "6 - вихід"};
+        for (String a: commands) {
+            System.out.println(a);
         }
     }
 }
